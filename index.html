@@ -952,7 +952,7 @@
       'assets/bgm-4.mp3'
     ];
     const bgmAudio = document.getElementById('bgm-audio');
-    bgmAudio.loop = ended;
+    bgmAudio.loop = true;
     bgmAudio.src = BGM_TRACKS[Math.floor(Math.random() * BGM_TRACKS.length)];
     const audioState = { muted: false, volume: CONFIG.defaultVolume };
 
