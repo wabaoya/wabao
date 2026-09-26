@@ -951,9 +951,19 @@
       'assets/bgm-3.mp3',
       'assets/bgm-4.mp3'
     ];
-    const bgmAudio = document.getElementById('bgm-audio');
-    bgmAudio.loop = true;
-    bgmAudio.src = BGM_TRACKS[Math.floor(Math.random() * BGM_TRACKS.length)];
+const bgmAudio = document.getElementById('bgm-audio');
+    
+    // 1. 记录当前播放哪一首（随机第一首）
+    let currentTrackIndex = Math.floor(Math.random() * BGM_TRACKS.length);
+    bgmAudio.src = BGM_TRACKS[currentTrackIndex];
+
+    // 2. 监听播放结束事件：当一首歌放完后，自动放下一首
+    bgmAudio.addEventListener('ended', () => {
+        currentTrackIndex = (currentTrackIndex + 1) % BGM_TRACKS.length; // 顺序播放下一首
+        bgmAudio.src = BGM_TRACKS[currentTrackIndex];
+        bgmAudio.play().catch(e => console.log('自动播放被浏览器拦截:', e));
+    });
+
     const audioState = { muted: false, volume: CONFIG.defaultVolume };
 
     let audioCtx = null;
