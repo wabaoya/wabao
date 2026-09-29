@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>掘金挖宝 - 管理后台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #e2e8f0;
+  }
+  .card {
+    background: #1e293b;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  }
+  input[type="text"], input[type="password"], input[type="number"] {
+    background: #0f172a;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: #fff;
+    width: 100%;
+  }
+  input:focus { outline: 2px solid #f59e0b; }
+  label { font-size: 13px; color: #94a3b8; display:block; margin-bottom: 4px; }
+  .field { margin-bottom: 14px; }
+  .btn-primary {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: #fff; font-weight: 700; border-radius: 12px; padding: 10px 20px;
+    border: 1px solid #60a5fa; cursor: pointer;
+  }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-secondary {
+    background: linear-gradient(135deg, #475569, #1e293b);
+    color: #fff; font-weight: 600; border-radius: 12px; padding: 10px 20px;
+    border: 1px solid #64748b; cursor: pointer;
+  }
+  .btn-danger {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    color: #fff; font-weight: 700; border-radius: 12px; padding: 10px 20px;
+    border: 1px solid #fca5a5; cursor: pointer;
+  }
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: #16a34a; color: #fff; padding: 10px 18px; border-radius: 10px;
+    font-size: 14px; font-weight: 600; box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<!-- Login Screen -->
+<div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
+  <div class="card w-full max-w-sm p-8">
+    <div class="w-14 h-14 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-500/30">
+      <i class="fa-solid fa-user-shield text-2xl"></i>
+    </div>
+    <h1 class="text-white font-bold text-xl text-center mb-1">管理后台登录</h1>
+    <p class="text-slate-400 text-sm text-center mb-6">掘金挖宝 · 游戏管理系统</p>
+
+    <div class="field">
+      <label>账号</label>
+      <input type="text" id="login-username" placeholder="请输入账号" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>密码</label>
+      <input type="password" id="login-password" placeholder="请输入密码" autocomplete="current-password">
+    </div>
+    <p id="login-error" class="text-rose-400 text-sm mb-3 hidden">账号或密码错误</p>
+    <button id="btn-login" class="btn-primary w-full justify-center">登录</button>
+    <p class="text-slate-500 text-xs text-center mt-4">首次使用默认账号：admin　默认密码：admin123</p>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" class="hidden max-w-3xl mx-auto p-4 sm:p-8">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-white font-bold text-2xl">管理后台</h1>
+      <p class="text-slate-400 text-sm">当前登录账号：<span id="current-account-label" class="text-amber-400"></span></p>
+    </div>
+    <button id="btn-logout" class="btn-secondary"><i class="fa-solid fa-right-from-bracket mr-1"></i>退出登录</button>
+  </div>
+
+  <!-- Account Settings -->
+  <div class="card p-6 mb-6">
+    <h2 class="text-white font-bold text-lg mb-4"><i class="fa-solid fa-key mr-2 text-amber-400"></i>账户设置</h2>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div class="field">
+        <label>当前密码（用于确认修改）</label>
+        <input type="password" id="acc-current-password" placeholder="请输入当前密码">
+      </div>
+      <div class="field">
+        <label>新账号（留空则不修改）</label>
+        <input type="text" id="acc-new-username" placeholder="新账号">
+      </div>
+      <div class="field">
+        <label>新密码（留空则不修改）</label>
+        <input type="password" id="acc-new-password" placeholder="新密码">
+      </div>
+      <div class="field">
+        <label>确认新密码</label>
+        <input type="password" id="acc-new-password-confirm" placeholder="再次输入新密码">
+      </div>
+    </div>
+    <button id="btn-save-account" class="btn-primary">保存账户设置</button>
+  </div>
+
+  <!-- Player Accounts -->
+  <div class="card p-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-white font-bold text-lg"><i class="fa-solid fa-users mr-2 text-amber-400"></i>用户管理</h2>
+      <button id="btn-refresh-users" class="btn-secondary"><i class="fa-solid fa-rotate mr-1"></i>刷新</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="w-full text-sm" style="border-collapse:collapse;">
+        <thead>
+          <tr class="text-slate-400 text-left">
+            <th class="pb-2 pr-3">账号</th>
+            <th class="pb-2 pr-3">昵称</th>
+            <th class="pb-2 pr-3">注册时间</th>
+            <th class="pb-2 pr-3">会员状态</th>
+            <th class="pb-2">操作</th>
+          </tr>
+        </thead>
+        <tbody id="users-tbody"></tbody>
+      </table>
+      <p id="users-empty" class="text-slate-500 text-xs mt-3 hidden">暂无注册用户</p>
+    </div>
+    <p class="text-slate-500 text-xs mt-4">提示：以上用户数据保存在浏览器 localStorage 中，与 index.html 游戏页面共享同一浏览器 / 同一域名。若需要跨设备共享的用户数据库，请接入真实的服务器后端。</p>
+  </div>
+
+  <!-- Game Parameters -->
+  <div class="card p-6 mb-6">
+    <h2 class="text-white font-bold text-lg mb-4"><i class="fa-solid fa-gamepad mr-2 text-amber-400"></i>游戏参数设置</h2>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div class="field">
+        <label>目标得分</label>
+        <input type="number" id="cfg-targetScore" min="1">
+      </div>
+      <div class="field">
+        <label>单局时间（秒）</label>
+        <input type="number" id="cfg-timeLimit" min="10">
+      </div>
+      <div class="field">
+        <label>累计炸弹上限（触发游戏结束）</label>
+        <input type="number" id="cfg-bombsMax" min="1">
+      </div>
+      <div class="field">
+        <label>玩家道具炸弹初始数量</label>
+        <input type="number" id="cfg-playerBombsCount" min="0">
+      </div>
+      <div class="field">
+        <label>复活所需金币</label>
+        <input type="number" id="cfg-reviveCost" min="1">
+      </div>
+      <div class="field">
+        <label>充值二维码倒计时（秒）</label>
+        <input type="number" id="cfg-rechargeSeconds" min="10">
+      </div>
+      <div class="field">
+        <label>默认背景音乐音量（0-1）</label>
+        <input type="number" id="cfg-defaultVolume" min="0" max="1" step="0.05">
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <button id="btn-save-config" class="btn-primary">保存参数设置</button>
+      <button id="btn-reset-config" class="btn-secondary">恢复默认设置</button>
+    </div>
+    <p class="text-slate-500 text-xs mt-4">提示：以上设置保存在浏览器 localStorage 中，index.html 游戏页面会在打开时自动读取同一域名下的设置。若需要跨设备、多人共享的后台数据，请接入真实的服务器数据库。</p>
+  </div>
+</div>
+
+<script>
+  const DEFAULT_CONFIG = {
+    targetScore: 100,
+    bombsMax: 3,
+    playerBombsCount: 3,
+    reviveCost: 100,
+    rechargeSeconds: 180,
+    defaultVolume: 0.6,
+    timeLimit: 60
+  };
+  const DEFAULT_ACCOUNT = { username: 'admin', password: 'admin123' };
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1800);
+  }
+
+  function getAccount() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('admin_account') || 'null');
+      if (saved && saved.username && saved.password) return saved;
+    } catch (e) {}
+    localStorage.setItem('admin_account', JSON.stringify(DEFAULT_ACCOUNT));
+    return { ...DEFAULT_ACCOUNT };
+  }
+
+  function saveAccount(acc) {
+    localStorage.setItem('admin_account', JSON.stringify(acc));
+  }
+
+  function getConfig() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('game_config') || 'null');
+      if (saved) return { ...DEFAULT_CONFIG, ...saved };
+    } catch (e) {}
+    return { ...DEFAULT_CONFIG };
+  }
+
+  function saveConfig(cfg) {
+    localStorage.setItem('game_config', JSON.stringify(cfg));
+  }
+
+  function isLoggedIn() {
+    return sessionStorage.getItem('admin_logged_in') === '1';
+  }
+
+  function showDashboard() {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+    document.getElementById('current-account-label').textContent = getAccount().username;
+    loadConfigIntoForm();
+    renderUsersTable();
+  }
+
+  function showLogin() {
+    document.getElementById('dashboard').classList.add('hidden');
+    document.getElementById('login-screen').classList.remove('hidden');
+    document.getElementById('login-username').value = '';
+    document.getElementById('login-password').value = '';
+    document.getElementById('login-error').classList.add('hidden');
+  }
+
+  document.getElementById('btn-login').addEventListener('click', () => {
+    const u = document.getElementById('login-username').value.trim();
+    const p = document.getElementById('login-password').value;
+    const acc = getAccount();
+    if (u === acc.username && p === acc.password) {
+      sessionStorage.setItem('admin_logged_in', '1');
+      showDashboard();
+    } else {
+      document.getElementById('login-error').classList.remove('hidden');
+    }
+  });
+
+  document.getElementById('btn-logout').addEventListener('click', () => {
+    sessionStorage.removeItem('admin_logged_in');
+    showLogin();
+  });
+
+  document.getElementById('btn-save-account').addEventListener('click', () => {
+    const acc = getAccount();
+    const currentPw = document.getElementById('acc-current-password').value;
+    if (currentPw !== acc.password) {
+      showToast('当前密码不正确');
+      return;
+    }
+    const newUsername = document.getElementById('acc-new-username').value.trim();
+    const newPassword = document.getElementById('acc-new-password').value;
+    const newPasswordConfirm = document.getElementById('acc-new-password-confirm').value;
+
+    if (newPassword || newPasswordConfirm) {
+      if (newPassword !== newPasswordConfirm) {
+        showToast('两次输入的新密码不一致');
+        return;
+      }
+    }
+
+    const updated = {
+      username: newUsername || acc.username,
+      password: newPassword || acc.password
+    };
+    saveAccount(updated);
+    document.getElementById('current-account-label').textContent = updated.username;
+    document.getElementById('acc-current-password').value = '';
+    document.getElementById('acc-new-username').value = '';
+    document.getElementById('acc-new-password').value = '';
+    document.getElementById('acc-new-password-confirm').value = '';
+    showToast('账户设置已保存');
+  });
+
+  function loadConfigIntoForm() {
+    const cfg = getConfig();
+    document.getElementById('cfg-targetScore').value = cfg.targetScore;
+    document.getElementById('cfg-timeLimit').value = cfg.timeLimit;
+    document.getElementById('cfg-bombsMax').value = cfg.bombsMax;
+    document.getElementById('cfg-playerBombsCount').value = cfg.playerBombsCount;
+    document.getElementById('cfg-reviveCost').value = cfg.reviveCost;
+    document.getElementById('cfg-rechargeSeconds').value = cfg.rechargeSeconds;
+    document.getElementById('cfg-defaultVolume').value = cfg.defaultVolume;
+  }
+
+  document.getElementById('btn-save-config').addEventListener('click', () => {
+    const cfg = {
+      targetScore: parseInt(document.getElementById('cfg-targetScore').value) || DEFAULT_CONFIG.targetScore,
+      timeLimit: parseInt(document.getElementById('cfg-timeLimit').value) || DEFAULT_CONFIG.timeLimit,
+      bombsMax: parseInt(document.getElementById('cfg-bombsMax').value) || DEFAULT_CONFIG.bombsMax,
+      playerBombsCount: parseInt(document.getElementById('cfg-playerBombsCount').value) || 0,
+      reviveCost: parseInt(document.getElementById('cfg-reviveCost').value) || DEFAULT_CONFIG.reviveCost,
+      rechargeSeconds: parseInt(document.getElementById('cfg-rechargeSeconds').value) || DEFAULT_CONFIG.rechargeSeconds,
+      defaultVolume: Math.min(1, Math.max(0, parseFloat(document.getElementById('cfg-defaultVolume').value)))
+    };
+    if (isNaN(cfg.defaultVolume)) cfg.defaultVolume = DEFAULT_CONFIG.defaultVolume;
+    saveConfig(cfg);
+    showToast('游戏参数已保存');
+  });
+
+  document.getElementById('btn-reset-config').addEventListener('click', () => {
+    saveConfig({ ...DEFAULT_CONFIG });
+    loadConfigIntoForm();
+    showToast('已恢复默认设置');
+  });
+
+  // =====================================================
+  // Player accounts (registered from index.html, shared via
+  // localStorage on the same origin)
+  // =====================================================
+  const USERS_KEY = 'gk_users';
+
+  function loadGameUsers() {
+    try { return JSON.parse(localStorage.getItem(USERS_KEY) || '{}'); } catch (e) { return {}; }
+  }
+  function saveGameUsers(users) {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  }
+  function isUserVip(user) {
+    if (!user || !user.vip) return false;
+    if (user.vip.unlimited) return true;
+    return !!(user.vip.expiresAt && Date.now() < user.vip.expiresAt);
+  }
+
+  function renderUsersTable() {
+    const users = loadGameUsers();
+    const tbody = document.getElementById('users-tbody');
+    const empty = document.getElementById('users-empty');
+    const names = Object.keys(users);
+    tbody.innerHTML = '';
+
+    if (names.length === 0) {
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+
+    names.sort((a, b) => (users[b].registeredAt || 0) - (users[a].registeredAt || 0));
+
+    names.forEach(name => {
+      const u = users[name];
+      const vip = isUserVip(u);
+      const tr = document.createElement('tr');
+      tr.style.borderTop = '1px solid rgba(255,255,255,0.08)';
+      tr.innerHTML = `
+        <td class="py-2 pr-3 text-white">${u.username}</td>
+        <td class="py-2 pr-3 text-slate-300">${u.nickname || ''}</td>
+        <td class="py-2 pr-3 text-slate-400">${u.registeredAt ? new Date(u.registeredAt).toLocaleString() : '-'}</td>
+        <td class="py-2 pr-3">${vip ? '<span style="color:#34d399;font-weight:700;">无限期VIP</span>' : '<span class="text-slate-500">普通用户</span>'}</td>
+        <td class="py-2"></td>
+      `;
+      const actionTd = tr.lastElementChild;
+      const btn = document.createElement('button');
+      btn.className = vip ? 'btn-secondary' : 'btn-primary';
+      btn.textContent = vip ? '取消VIP' : '设为无限期VIP';
+      btn.style.padding = '6px 12px';
+      btn.style.fontSize = '12px';
+      btn.addEventListener('click', () => toggleUserVip(name));
+      actionTd.appendChild(btn);
+      tbody.appendChild(tr);
+    });
+  }
+
+  function toggleUserVip(username) {
+    const users = loadGameUsers();
+    const u = users[username];
+    if (!u) return;
+    const currentlyVip = isUserVip(u);
+    u.vip = currentlyVip
+      ? { unlimited: false, expiresAt: null }
+      : { unlimited: true, expiresAt: null };
+    saveGameUsers(users);
+    renderUsersTable();
+    showToast(currentlyVip ? `已取消 ${username} 的VIP` : `已将 ${username} 设为无限期VIP`);
+  }
+
+  document.getElementById('btn-refresh-users').addEventListener('click', renderUsersTable);
+
+  // Init
+  getAccount();
+  if (isLoggedIn()) {
+    showDashboard();
+  } else {
+    showLogin();
+  }
+</script>
+</body>
+</html>
